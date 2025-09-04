@@ -78,14 +78,14 @@ Hardware: Webcam & Microphone.
 Software:Python 3.10 , pip
 
  ### Installation
-''' bash
+```bash
 # Clone repository
 git clone
 https://github.com/your-username/mental-burnout-detector.git
 cd mental-burnout-detector
 
 # Install dependencies
-''' bash
+ 
 pip install -r requirements.txt
 
 # Run the application
