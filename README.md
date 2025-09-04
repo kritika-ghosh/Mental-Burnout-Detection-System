@@ -58,7 +58,7 @@ This holistic approach enables more accurate, real-time detection of burnout sig
 
  ## 4. Research References
 
-1.** Burnout Questionnaire Scale:** [Spring - Internal Medicine Burnout study](https://link.springer.com/article/10.1007/s11606-014-3112-6)
+1.**Burnout Questionnaire Scale:** [Spring - Internal Medicine Burnout study](https://link.springer.com/article/10.1007/s11606-014-3112-6)
 
 
 2. **EAR & MAR Metrics:**[MDPI- Eye/ Mouth Aspect Ratio in Fatigue Detection](https://www.mdpi.com/1424-8220/24/17/56830)
