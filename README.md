@@ -12,7 +12,7 @@ Our project addresses this by creating a multi-modal burnout detection system th
 
 - **Facial Analysis** (eye and mouth fatigue indicators + emotion recognition).
 
-- **Voice Analysis** (sentiment, transcription, and pitch variation).
+- **Voice Analysis** (sentiment, transcription).
 
 
 This holistic approach enables more accurate, real-time detection of burnout signs compared to single-modality systems.
@@ -75,7 +75,7 @@ This holistic approach enables more accurate, real-time detection of burnout sig
 
 Hardware: Webcam & Microphone.
 
-Software:Python 3.8+ , pip
+Software:Python 3.10 , pip
 
  ### Installation
 ''' bash
