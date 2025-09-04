@@ -93,15 +93,15 @@ pip install -r requirements.txt
 python app.py
 
 ## File Structure
-
+```bash
 .
-├── app.py                     
-├── deepface.py                
-├── ear_mar_calculation.py     
-├── voice.py                   
-├── requirements.txt           
-└── README.md                  
-
+├── app.py                  # Main Flask/Streamlit application                
+├── deepface.py             # Emotion detection module               
+├── ear_mar_calculation.py  # EAR & MAR Fatigue detection   
+├── voice.py                # Voice analysis   
+├── requirements.txt        # Dependencies   
+└── README.md               # Project Documentation   
+```
 ## Contributions
 
 - Muskan and Mineesha (voice sentimental analysis ,burnout scale,input capture using WebRTC API, Enabling video/audio processing for interactive features)
