@@ -93,12 +93,12 @@ python app.py
 6. File Structure
 
 .
-├── app.py                     # Main Flask/Streamlit application
-├── deepface.py                # Emotion detection module
-├── ear_mar_calculation.py     # EAR & MAR fatigue detection
-├── voice.py                   # Voice analysis (sentiment, pitch, transcription)
-├── requirements.txt           # Dependencies
-└── README.md                  # Project Documentation
+├── app.py                     
+├── deepface.py                
+├── ear_mar_calculation.py     
+├── voice.py                   
+├── requirements.txt           
+└── README.md                  
 
 7. Contributions
 
