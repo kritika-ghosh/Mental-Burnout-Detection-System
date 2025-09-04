@@ -42,7 +42,7 @@ Based on validated clinical burnout scales (Maslach Burnout Inventory).
 
 Facial Analysis
 
-EAR (Eye Aspect Ratio): Detects eye closure, drowsiness, and fatigue (Source).
+EAR (Eye Aspect Ratio): Detects eye closure, drowsiness, and fatigue .
 
 MAR (Mouth Aspect Ratio): Captures yawning/fatigue signals.
 
@@ -55,7 +55,7 @@ Speech-to-Text: Converts audio input into text for further sentiment analysis.
 
 Sentiment Analysis: Implements VADER sentiment scoring on transcripts.
 
-Pitch Analysis: Extracts pitch variation patterns to detect stress/fatigue (Source).
+Pitch Analysis: Extracts pitch variation patterns to detect stress/fatigue .
 
 4. Research References
 
