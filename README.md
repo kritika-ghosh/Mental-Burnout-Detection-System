@@ -85,6 +85,7 @@ https://github.com/your-username/mental-burnout-detector.git
 cd mental-burnout-detector
 
 # Install dependencies
+'''bash
 pip install -r requirements.txt
 
 # Run the application
@@ -102,11 +103,11 @@ python app.py
 
 ## Contributions
 
-- Muskan Bisen (Lead Developer & Full-Stack): Website UI/UX, EAR/MAR logic integration.
+- Muskan and Mineesha (voice sentimental analysis ,burnout scale,input capture using WebRTC API, Enabling video/audio processing for interactive features)
 
-- Team Member 2 (Voice Analysis Lead): Implemented voice sentiment & pitch analysis, audio pipeline.
+- Rajat and Manan (Emotion Detection)
 
-- Team Member 3 (AI Integration & Management): Integrated emotion detection mod.el, coordinated project development
+- Kritika and Prabhav( EAR and MAR logic and calculation , Data pre - processing and model training )
 
 
 
