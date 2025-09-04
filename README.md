@@ -87,9 +87,9 @@ cd mental-burnout-detector
 # Install dependencies
  ```bash
 pip install -r requirements.txt
-
-# Run the application
 ```
+# Run the application
+
 python app.py
 
 ## File Structure
