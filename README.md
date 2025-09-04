@@ -78,7 +78,7 @@ Hardware: Webcam & Microphone.
 Software:Python 3.8+ , pip
 
  ### Installation
-'''bash
+''' bash
 # Clone repository
 git clone
 https://github.com/your-username/mental-burnout-detector.git
@@ -106,15 +106,7 @@ python app.py
 
 - Team Member 2 (Voice Analysis Lead): Implemented voice sentiment & pitch analysis, audio pipeline.
 
-- Team Member 3 (AI Integration & Management): Integrated emotion detection model, coordinated project development.
-
-
-## License
-
-This project is licensed under the MIT License – you are free to use, modify, and distribute with attribution.
-
-
- Our system is innovative because it combines multiple modalities (face + voice + self-assessment) into a single unified burnout detection platform, making it more reliable and clinically relevant than existing single-input solutions.
+- Team Member 3 (AI Integration & Management): Integrated emotion detection mod.el, coordinated project development
 
 
 
