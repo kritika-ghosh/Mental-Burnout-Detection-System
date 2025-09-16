@@ -1143,4 +1143,8 @@ with gr.Blocks(theme=burnout_theme, css=custom_css) as demo:
 
     
 if __name__ == "__main__":
-    demo.launch(share=True)
+    demo.launch(
+    server_name="0.0.0.0",
+    server_port=7860,  # Or any other port you prefer
+    share=True
+)
