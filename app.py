@@ -1143,4 +1143,4 @@ with gr.Blocks(theme=burnout_theme, css=custom_css) as demo:
 
     
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(share=True)
