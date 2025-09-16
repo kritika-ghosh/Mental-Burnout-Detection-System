@@ -1,4 +1,4 @@
-﻿absl-py==2.3.1
+absl-py==2.3.1
 aiofiles==23.2.1
 altair==5.5.0
 annotated-types==0.7.0
@@ -10,6 +10,7 @@ beautifulsoup4==4.13.4
 blinker==1.9.0
 Brotli==1.1.0
 cachetools==5.5.2
+catboost==1.2.8
 certifi==2025.7.14
 cffi==1.17.1
 charset-normalizer==3.4.2
@@ -38,8 +39,9 @@ google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.2
 google-pasta==0.2.0
 googleapis-common-protos==1.70.0
-gradio==5.42.0
-gradio_client==1.11.1
+gradio==4.38.1
+gradio_webrtc 
+gradio_client
 groovy==0.1.2
 grpcio==1.73.1
 gspread==6.2.1
@@ -137,11 +139,12 @@ tensorflow==2.19.0
 termcolor==3.1.0
 tf_keras==2.19.0
 threadpoolctl==3.6.0
-tomlkit==0.13.3
+tomlkit==0.12.0
 tqdm==4.67.1
 typer==0.16.0
 typing-inspection==0.4.1
 typing_extensions==4.14.1
+twilio==9.1.0
 tzdata==2025.2
 uritemplate==4.2.0
 urllib3==2.5.0
