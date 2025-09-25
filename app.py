@@ -11,103 +11,16 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from collections import Counter, defaultdict
 import joblib
 import re
-burnout_theme = gr.Theme(
-    # Set the primary and secondary colors to match your design
-    primary_hue="pink",
-    secondary_hue="gray"
-).set(
-    # General colors and backgrounds
-    body_background_fill="#f7f3e8",
-    body_background_fill_dark="#f7f3e8",
-    block_background_fill="#fff",
-    block_background_fill_dark="#fff",
-    block_info_text_color="#333",
-    block_info_text_color_dark="#333",
-    block_label_text_color="#333",
-    block_label_text_color_dark="#333",
-    block_title_text_color="#333",
-    block_title_text_color_dark="#333",
-    
-    # Text colors
-    body_text_color="#333",
-    body_text_color_dark="#333",
-    body_text_color_subdued="#666",
-    
-    # Accent colors for buttons, tabs, and titles
-    color_accent_soft="#e5989b",
-    color_accent_soft_dark="#d4888b",
-)
+import os
 
 # Configuration
 RUN_DURATION = 20
-
-# Define a custom Gradio theme
 
 EMOTION_BUCKETS = {
     'positive': ['happy'],
     'neutral': ['neutral'],
     'negative': ['angry', 'sad', 'fear', 'disgust', 'surprise']
 }
-
-# Detailed emotions with feature-based subtypes
-DETAILED_EMOTIONS = {
-    'angry': {
-        'subtypes': {
-            'annoyance': {'brow_furrow': 1, 'eye_squint': 1},
-            'frustration': {'brow_furrow': 2, 'jaw_clench': 1, 'lip_press': 1},
-            'rage': {'mouth_open': 2, 'brow_furrow': 3, 'eye_squint': 2},
-        },
-        'description': "Eyebrows lowered, eyes glaring, mouth tense"
-    },
-    'happy': {
-        'subtypes': {
-            'amusement': {'mouth_smile': 1},
-            'joy': {'mouth_smile': 2, 'eye_crinkle': 1},
-            'elation': {'mouth_smile': 3, 'eye_crinkle': 2},
-        },
-        'description': "Cheeks raised, mouth corners up"
-    },
-    'sad': {
-        'subtypes': {
-            'disappointment': {'mouth_frown': 1},
-            'sorrow': {'mouth_frown': 2, 'brow_raise': 1},
-            'grief': {'mouth_frown': 3, 'brow_raise': 2},
-        },
-        'description': "Inner eyebrows raised, mouth corners down"
-    },
-    'fear': {
-        'subtypes': {
-            'anxiety': {'eye_widen': 1},
-            'alarm': {'eye_widen': 2, 'mouth_open': 1},
-            'terror': {'eye_widen': 3, 'mouth_open': 2},
-        },
-        'description': "Eyes wide, eyebrows raised, mouth open"
-    },
-    'disgust': {
-        'subtypes': {
-            'revulsion': {'nose_wrinkle': 2, 'upper_lip_raise': 2},
-            'contempt': {'lip_curl': 1}
-        },
-        'description': "Nose wrinkled, upper lip raised"
-    },
-    'surprise': {
-        'subtypes': {
-            'suddenness': {'eye_widen': 1, 'mouth_open': 1},
-            'astonishment': {'eye_widen': 2, 'jaw_drop': 2},
-            'awe': {'eye_widen': 2, 'brow_raise': 2},
-            'warning': {'brow_furrow': 1, 'eye_squint': 1, 'mouth_open': 1}
-        },
-        'description': "Eyebrows raised, jaw drop"
-    },
-    'neutral': {
-        'subtypes': {
-            'calm': {},
-            'contemplative': {'brow_furrow': 0.5},
-        },
-        'description': "Relaxed facial muscles"
-    }
-}
-
 
 sentiment_analyzer = SentimentIntensityAnalyzer()
 
@@ -144,211 +57,35 @@ options = [
 class CompleteEmotionDetector:
     def __init__(self):
         self.bucket_counts = defaultdict(int)
-        self.detailed_emotion_counts = defaultdict(int)
-        self.subtype_counts = defaultdict(lambda: defaultdict(int))
         self.lock = threading.Lock()
-        # ADD THESE TWO LINES:
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        self.eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
         
-
     def _get_emotion_bucket(self, emotion):
         for bucket, emotions_list in EMOTION_BUCKETS.items():
             if emotion in emotions_list:
                 return bucket
         return "unknown"
 
-    def detect_anger_features(self, roi_gray, w, h):
-        features = {'brow_furrow': 0, 'eye_squint': 0, 'jaw_clench': 0, 'lip_press': 0, 'mouth_open': 0}
-        brow_region = roi_gray[h//5:h//2, w//3:2*w//3]
-        if brow_region.size > 0:
-            sobel_x = cv2.Sobel(brow_region, cv2.CV_64F, 1, 0, ksize=3)
-            if np.mean(np.abs(sobel_x)) > 18: features['brow_furrow'] = 2
-        eyes = self.eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=5)
-        if len(eyes) > 0:
-            avg_eye_height = np.mean([eh for (ex, ey, ew, eh) in eyes])
-            if (avg_eye_height / h) < 0.1: features['eye_squint'] = 2
-        mouth_roi = roi_gray[2*h//3:h, w//4:3*w//4]
-        if mouth_roi.size > 0:
-            thresh = cv2.adaptiveThreshold(mouth_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if contours:
-                area = cv2.contourArea(max(contours, key=cv2.contourArea))
-                normalized_area = area / (mouth_roi.shape[0] * mouth_roi.shape[1])
-                if normalized_area > 0.15: features['mouth_open'] = 2
-                elif normalized_area < 0.02: features['lip_press'] = 2
-        return features
-
-    def detect_happy_features(self, roi_gray, w, h):
-        features = {'mouth_smile': 0, 'eye_crinkle': 0}
-        mouth_roi = roi_gray[2*h//3:h, w//5:4*w//5]
-        if mouth_roi.size > 0:
-            thresh = cv2.adaptiveThreshold(mouth_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if contours:
-                largest_contour = max(contours, key=cv2.contourArea)
-                x_c, y_c, w_c, h_c = cv2.boundingRect(largest_contour)
-                if w_c > 0 and h_c > 0 and (w_c / h_c) > 2.0:
-                    features['mouth_smile'] = 2
-        eyes = self.eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=5)
-        if len(eyes) > 0:
-            eye_crinkle_variance = 0
-            for (ex, ey, ew, eh) in eyes:
-                corner_roi = roi_gray[ey:ey+eh, max(0, ex-ew//2):ex]
-                if corner_roi.size > 0:
-                    eye_crinkle_variance += cv2.Laplacian(corner_roi, cv2.CV_64F).var()
-            if eye_crinkle_variance / len(eyes) > 100:
-                features['eye_crinkle'] = 2
-        return features
-
-    def detect_sad_features(self, roi_gray, w, h):
-        features = {'mouth_frown': 0, 'brow_raise': 0}
-        mouth_roi = roi_gray[2*h//3:h, w//4:3*w//4]
-        if mouth_roi.size > 0:
-            thresh = cv2.adaptiveThreshold(mouth_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if contours:
-                cnt = max(contours, key=cv2.contourArea)
-                epsilon = 0.02 * cv2.arcLength(cnt, True)
-                approx = cv2.approxPolyDP(cnt, epsilon, True)
-                if len(approx) >= 6:
-                    mouth_y_center = h * 0.75
-                    lower_points = [p[0][1] for p in approx if p[0][1] > mouth_y_center]
-                    upper_points = [p[0][1] for p in approx if p[0][1] < mouth_y_center]
-                    if lower_points and upper_points and np.mean(lower_points) > np.mean(upper_points) + (h * 0.05):
-                        features['mouth_frown'] = 2
-        brow_center_roi = roi_gray[h//5:h//2, w//3:2*w//3]
-        if brow_center_roi.size > 0 and cv2.Laplacian(brow_center_roi, cv2.CV_64F).var() > 75:
-            features['brow_raise'] = 1
-        return features
-
-    def detect_fear_features(self, roi_gray, w, h):
-        features = {'eye_widen': 0, 'mouth_open': 0}
-        eyes = self.eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=5)
-        if len(eyes) > 0:
-            aspect_ratios = []
-            for (ex, ey, ew, eh) in eyes:
-                if ew > 0:
-                    aspect_ratios.append(eh / ew)
-            if aspect_ratios:
-                avg_ratio = np.mean(aspect_ratios)
-                if avg_ratio > 0.8:
-                    features['eye_widen'] = 2
-        mouth_roi = roi_gray[2*h//3:h, w//4:3*w//4]
-        if mouth_roi.size > 0:
-            thresh = cv2.adaptiveThreshold(mouth_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if contours:
-                cnt = max(contours, key=cv2.contourArea)
-                x_c, y_c, w_c, h_c = cv2.boundingRect(cnt)
-                if h_c > 0 and (w_c / h_c) < 1.5:
-                    features['mouth_open'] = 2
-        return features
-
-    def detect_disgust_features(self, roi_gray, w, h):
-        features = {'nose_wrinkle': 0, 'upper_lip_raise': 0, 'lip_curl': 0}
-        nose_region = roi_gray[h//4:h//2, w//3:2*w//3]
-        if nose_region.size > 0 and cv2.Laplacian(nose_region, cv2.CV_64F).var() > 70:
-            features['nose_wrinkle'] = 2
-        mouth_roi = roi_gray[2*h//3:h, w//4:3*w//4]
-        if mouth_roi.size > 0:
-            thresh = cv2.adaptiveThreshold(mouth_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if contours:
-                cnt = max(contours, key=cv2.contourArea)
-                if len(cnt) > 0 and cnt[:, 0, 1].min() < mouth_roi.shape[0] * 0.2:
-                    features['upper_lip_raise'] = 1
-        return features
-
-    def detect_surprise_features(self, roi_gray, w, h):
-        features = {'eye_widen': 0, 'mouth_open': 0, 'jaw_drop': 0, 'brow_raise': 0}
-        eyes = self.eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=5)
-        if len(eyes) > 0:
-            aspect_ratios = []
-            for (ex, ey, ew, eh) in eyes:
-                if ew > 0:
-                    aspect_ratios.append(eh / ew)
-            if aspect_ratios:
-                avg_ratio = np.mean(aspect_ratios)
-                if avg_ratio > 0.9:
-                    features['eye_widen'] = 3
-        mouth_roi = roi_gray[2*h//3:h, w//4:3*w//4]
-        if mouth_roi.size > 0:
-            thresh = cv2.adaptiveThreshold(mouth_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if contours:
-                cnt = max(contours, key=cv2.contourArea)
-                x_c, y_c, w_c, h_c = cv2.boundingRect(cnt)
-                if h_c > 0:
-                    normalized_area = cv2.contourArea(cnt) / (mouth_roi.shape[0] * mouth_roi.shape[1])
-                    if normalized_area > 0.18 and (w_c / h_c) < 1.0:
-                        features['mouth_open'] = 3
-                        features['jaw_drop'] = 2
-        brow_upper_region = roi_gray[h//10:h//3, w//4:3*w//4]
-        if brow_upper_region.size > 0 and cv2.Laplacian(brow_upper_region, cv2.CV_64F).var() > 90:
-            features['brow_raise'] = 2
-        return features
-
-    def determine_subtype(self, emotion, features):
-        scores = defaultdict(int)
-        if emotion not in DETAILED_EMOTIONS or 'subtypes' not in DETAILED_EMOTIONS[emotion]:
-            return ""
-        for subtype, feature_map in DETAILED_EMOTIONS[emotion]['subtypes'].items():
-            score = sum(features.get(feature, 0) * weight for feature, weight in feature_map.items())
-            scores[subtype] = score
-        if not any(scores.values()):
-            return list(DETAILED_EMOTIONS[emotion]['subtypes'].keys())[0] if DETAILED_EMOTIONS[emotion]['subtypes'] else ""
-        return max(scores.items(), key=lambda x: x[1])[0]
-    
     def analyze_frame(self, frame):
-        """
-        This method is designed to be called in a background thread. It calls DeepFace
-        (which is CPU/GPU heavy) and updates internal counters under a lock.
-        """
         try:
             results = DeepFace.analyze(
                 frame, actions=['emotion'],
-                detector_backend='mtcnn',
-                enforce_detection=False, silent=True
+                detector_backend='mtcnn', enforce_detection=False, silent=True
             )
             with self.lock:
                 if results:
-                    result = results[0]
-                    region = result.get('region', {})
-                    x, y, w, h = region.get('x', 0), region.get('y', 0), region.get('w', 0), region.get('h', 0)
-                    # validate region and proceed like before
-                    if w > 0 and h > 0 and x >= 0 and y >= 0 and (x + w) <= frame.shape[1] and (y + h) <= frame.shape[0]:
-                        dominant_emotion_deepface = result.get('dominant_emotion', 'neutral')
-                        roi_gray = cv2.cvtColor(frame[y:y+h, x:x+w], cv2.COLOR_BGR2GRAY)
-                        feature_detectors = {
-                            'angry': self.detect_anger_features, 'happy': self.detect_happy_features,
-                            'sad': self.detect_sad_features, 'fear': self.detect_fear_features,
-                            'disgust': self.detect_disgust_features, 'surprise': self.detect_surprise_features,
-                        }
-                        current_subtype = ""
-                        if dominant_emotion_deepface in feature_detectors:
-                            features = feature_detectors[dominant_emotion_deepface](roi_gray, w, h)
-                            current_subtype = self.determine_subtype(dominant_emotion_deepface, features)
-                            if current_subtype:
-                                self.subtype_counts[dominant_emotion_deepface][current_subtype] += 1
-                        elif dominant_emotion_deepface == 'neutral':
-                            # record neutral default subtype
-                            self.subtype_counts['neutral']['calm'] += 1
-                        self.detailed_emotion_counts[dominant_emotion_deepface] += 1
-                        bucket = self._get_emotion_bucket(dominant_emotion_deepface)
-                        self.bucket_counts[bucket] += 1
+                    dominant_emotion_deepface = results[0].get('dominant_emotion', 'neutral')
+                    bucket = self._get_emotion_bucket(dominant_emotion_deepface)
+                    self.bucket_counts[bucket] += 1
         except Exception:
-            # keep silent on failures to avoid crashing UI
             pass
 
     def get_stats(self):
         with self.lock:
             total = sum(self.bucket_counts.values())
-            pos = (self.bucket_counts['positive'] / total) * 100 if total else 0.0
-            neu = (self.bucket_counts['neutral'] / total) * 100 if total else 0.0
-            neg = (self.bucket_counts['negative'] / total) * 100 if total else 0.0
-            return (pos, neu, neg)
-
+            pos = (self.bucket_counts['positive'] / total) * 100 if total > 0 else 0.0
+            neu = (self.bucket_counts['neutral'] / total) * 100 if total > 0 else 0.0
+            neg = (self.bucket_counts['negative'] / total) * 100 if total > 0 else 0.0
+            return pos, neu, neg
 # ---------------------------
 # Face Analyzer (restructured for per-frame processing)
 # ---------------------------
@@ -436,7 +173,7 @@ class FaceAnalyzer:
             try:
                 face_landmarks = results.multi_face_landmarks[0]
                 landmarks = [(int(p.x * frame.shape[1]), int(p.y * frame.shape[0])) 
-                            for p in face_landmarks.landmark]
+                             for p in face_landmarks.landmark]
 
                 # Calculate EAR and MAR
                 left_ear = self.calculate_ear(LEFT_EYE, landmarks)
@@ -493,7 +230,7 @@ class FaceAnalyzer:
         processed_frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
         
         cv2.putText(processed_frame, timer_text, (text_x, text_y),
-                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
         return (cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB),
                f"{ear:.2f}" if ear is not None else "---",
@@ -624,8 +361,14 @@ answer_mapping = {
     "The symptoms of burnout that I’m experiencing won’t go away. I think about frustration at work a lot": 3,
     "I feel completely burned out and often wonder if I can go on. I am at the point where I may need some changes or may need to seek some sort of help": 4,
 }
-scaler=joblib.load('scaler.joblib')
-model = joblib.load('model.joblib')
+try:
+    scaler=joblib.load('scaler.joblib')
+    model = joblib.load('model.joblib')
+except FileNotFoundError:
+    gr.Warning("Model files not found. The app will run, but prediction will not work.")
+    scaler = None
+    model = None
+
 def preprocess_input(raw_dict, scaler):
     # Map questionnaire answers to ints
     q_encoded = [answer_mapping.get(ans, -1) for ans in raw_dict["Questionnaire Answers"]]
@@ -672,266 +415,25 @@ def preprocess_input(raw_dict, scaler):
     return X_scaled
 
 def predict_burnout(raw_dict):
+    if not scaler or not model:
+        raise RuntimeError("Model files not loaded. Cannot predict.")
+
     X_processed = preprocess_input(raw_dict, scaler)
     pred = model.predict(X_processed)
     # Assuming regression or float prediction; if classifier, adapt accordingly
     output_score = float(pred[0])
     return output_score
-import gradio as gr
-import os
 
-custom_css = """
-    /* Main body and font styling */
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
-
-    body, html, .gradio-app {
-        background-color: #f7f3e8 !important; /* Soft beige background */
-        font-family: 'Montserrat', sans-serif;
-        color: #333 !important;
-    }
+# --- PDF Download Function ---
+def download_info_pdf():
+    pdf_path = "info.pdf"
+    if os.path.exists(pdf_path):
+        return pdf_path
+    else:
+        print(f"Error: {pdf_path} not found.")
+        return None
     
-    /* Specific overrides for Hugging Face's dark mode to ensure text is visible */
-    [data-theme='dark'] body, 
-    [data-theme='dark'] .gradio-app,
-    [data-theme='dark'] .gradio-container,
-    [data-theme='dark'] .nav-bar,
-    [data-theme='dark'] .hero-section,
-    [data-theme='dark'] .functionality-section,
-    [data-theme='dark'] .technical-details-section,
-    [data-theme='dark'] .gr-text-box,
-    [data-theme='dark'] .gr-markdown,
-    [data-theme='dark'] .gr-radio-label {
-        background-color: #f7f3e8 !important;
-        color: #333 !important;
-    }
-    
-    /* Override input and label colors for better visibility in dark mode */
-    [data-theme='dark'] .gr-input, 
-    [data-theme='dark'] .gr-label,
-    [data-theme='dark'] .gr-output-text,
-    [data-theme='dark'] .gr-json-preview {
-        background-color: #fff !important;
-        color: #333 !important;
-    }
-    
-    [data-theme='dark'] .gradio-tabs .tab-button {
-      background-color: #e5989b !important;
-      color: #fff !important;
-    }
-    
-    [data-theme='dark'] .gradio-tabs .tab-button.selected {
-      background-color: #d4888b !important;
-    }
-    
-    [data-theme='dark'] .gradio-tabs .tab-button.selected::before {
-      background-color: #d4888b !important;
-    }
-    
-    [data-theme='dark'] .gradio-tabs .tab-button:hover {
-      background-color: #d4888b !important;
-    }
-
-    .gradio-container {
-        max-width: 1600px !important;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: #f7f3e8 !important;
-        box-shadow: none !important;
-    }
-    
-    /* Navigation Bar Styling */
-    .nav-bar {
-        background-color: #fff !important;
-        padding: 20px;
-        border-radius: 30px;
-        display: flex;
-        align-items: center;
-        gap: 40px;
-    }
-    .nav-left {
-        display: flex;
-        align-items: center;
-    }
-    .nav-right {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-left: auto;
-        text-align: right;
-    }
-    .nav-links span {
-        font-weight: 500;
-        cursor: pointer;
-        padding: 5px 10px;
-        border-radius: 5px;
-        transition: background-color 0.2s;
-    }
-    .nav-links span:hover {
-        background-color: rgba(255, 255, 255, 0.5);
-    }
-    .logo {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.5em;
-        font-weight: 800;
-        color: #e5989b !important; /* Soft pink accent */
-    }
-    .search-icon {
-        cursor: pointer;
-    }
-    .theme-text {
-      color: #777 !important;
-      font-size: 0.8em;
-      font-style: italic;
-    }
-
-    /* Hero Section Styling */
-    .hero-section {
-        background-color: #fff !important;
-        padding: 60px;
-        margin-top: 20px;
-        border-radius: 30px;
-        display: flex;
-        align-items: center;
-        gap: 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    }
-    .hero-text-container {
-        flex: 1;
-        padding-right: 20px;
-    }
-    .hero-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 3em;
-        font-weight: 700;
-        line-height: 1.4;
-        color: #e5989b !important; /* Soft pink accent */
-    }
-    .hero-subtitle {
-        color: #666 !important;
-        line-height: 1.6;
-        margin-top: 15px;
-    }
-    .learn-more-btn {
-        background-color: #e5989b !important; /* Soft pink accent */
-        color: #fff !important;
-        padding: 12px 25px;
-        border-radius: 25px;
-        margin-top: 30px;
-        font-weight: 600;
-        transition: background-color 0.2s;
-    }
-    .learn-more-btn:hover {
-        background-color: #d4888b !important; /* Slightly darker pink for hover */
-    }
-    .hero-image-container {
-        flex: 1;
-        text-align: right;
-    }
-    .hero-image {
-        max-width: 75%;
-        border-radius: 30px;
-    }
-
-    /* Functionality Section Styling */
-    .functionality-section {
-        background-color: #fff !important;
-        padding: 40px;
-        margin-top: 40px;
-        border-radius: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        max-width: 1600px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .functionality-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 2.5em;
-        font-weight: 600;
-        text-align: center;
-        margin-bottom: 20px;
-        color: #e5989b !important; /* Soft pink accent */
-    }
-    .gradio-tabs {
-        border-radius: 15px !important;
-    }
-    .gradio-tabs .tab-button {
-      border: 1px solid #e5989b !important; /* Soft pink accent */
-      color: #e5989b !important;
-      background-color: #f7f3e8 !important;
-    }
-    .gradio-tabs .tab-button.selected {
-      color: #fff !important;
-      background-color: #e5989b !important;
-    }
-    .gradio-tabs .tab-button.selected::before {
-      background-color: #e5989b !important;
-    }
-
-
-    /* Scrollbar for Questionnaire Tab */
-    #tab-0 .scrollable {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    /* Technical Details Section Styling */
-    .technical-details-section {
-        background-color: #fff !important;
-        padding: 60px;
-        border-radius: 30px;
-        display: flex;
-        align-items: center;
-        gap: 40px;
-        margin-top: 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    }
-    .expertise-text-container {
-        flex: 1;
-    }
-    .expertise-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 2.5em;
-        font-weight: 600;
-        color: #e5989b !important; /* Soft pink accent */
-        margin-bottom: 10px;
-    }
-    .expertise-subtitle {
-        color: #666 !important;
-        line-height: 1.6;
-        margin-bottom: 30px;
-    }
-    .expertise-image {
-        max-width: 100%;
-        border-radius: 30px;
-    }
-    .feature-list {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    .feature-item {
-        display: block;
-    }
-    .feature-icon {
-        display: none;
-    }
-    .feature-text {
-        padding-left: 0;
-    }
-    .feature-text h4 {
-        margin: 0;
-        font-weight: 600;
-        color: #4a4a4a !important;
-    }
-    .feature-text p {
-        margin: 5px 0 0;
-        color: #666 !important;
-    }
-    
-    /* Removed metrics section CSS */
-"""
-
-with gr.Blocks(theme=burnout_theme, css=custom_css) as demo:
+with gr.Blocks() as demo:
     # This is the JavaScript from your previous prompt to force the light theme.
     demo.load(
         None,
@@ -946,21 +448,6 @@ with gr.Blocks(theme=burnout_theme, css=custom_css) as demo:
         }
         """,
     )
-
-    # Mimicking a navigation bar
-    with gr.Row(elem_classes=["nav-bar"]):
-        with gr.Column(elem_classes=["nav-left"], scale=1):
-            gr.Markdown('<div class="logo">Burnout Detection System</div>', elem_classes="logo")
-        with gr.Column(elem_classes=["nav-right"], scale=2):
-            gr.Markdown('<span class="theme-text">best viewed in light mode</span>', elem_classes="theme-text")
-
-    # Hero Section
-    with gr.Row(elem_classes=["hero-section"]):
-        with gr.Column(elem_classes=["hero-text-container"]):
-            gr.Markdown('<h1 class="hero-title">A New Standard in Burnout Detection</h1>', elem_classes="hero-title")
-            gr.Markdown('<p class="hero-subtitle">Move beyond simple, subjective questionnaires and embrace a new era of proactive well-being management. Our innovative system provides a truly comprehensive and objective analysis of your mental and emotional state by harnessing the unparalleled power of multimodal AI. It intelligently integrates real-time analysis of subtle facial micro-expressions, nuanced vocal sentiment patterns, and a carefully designed clinical questionnaire to detect the earliest and often unseen signs of burnout with unprecedented accuracy and reliability. Specifically engineered for high-achieving students and dedicated professionals navigating immense pressure and demanding environments, this cutting-edge tool delivers deeply personalized insights and actionable feedback you can genuinely trust. Empower yourself to take definitive control of your mental health with a system that profoundly understands the unseen strain and silent battles you face. Begin to proactively manage your stress levels, build resilience, and effectively prevent burnout before it escalates into an overwhelming and debilitating challenge, ensuring your sustained well-being and peak performance.</p>')
-        with gr.Column(elem_classes=["hero-image-container"]):
-            gr.Image("hero.png", elem_classes="hero-image")
 
     # Functionality Section
     with gr.Column(elem_classes=["functionality-section"], elem_id="functionality-section"):
@@ -1001,33 +488,12 @@ with gr.Blocks(theme=burnout_theme, css=custom_css) as demo:
                 text_output = gr.Textbox(label="Transcribed Text")
                 sentiment_output = gr.Textbox(label="Sentiment Analysis (Pos, Neu, Neg, Comp)")
                 pitch_output = gr.Textbox(label="Pitch (Hz) ± Std Dev")
-                proceed_to_results_btn = gr.Button("Proceed to Results")
+                proceed_to_results_btn = gr.Button("Proceed to Suggestions")
 
-            # Results
-            with gr.TabItem("Results", id=3):
-                results_json = gr.JSON(label="Full Results (Questionnaire, EAR/MAR, Emotion, Voice, Subtypes)")
-                burnout_score_output = gr.Textbox(label="Burnout Score", interactive=False)
+            # Suggestions
+            with gr.TabItem("Suggestions", id=3):
+                suggestion_output = gr.Textbox(label="Suggestion based on Burnout Score", interactive=False)
 
-    # Technical Details Section (How it Works)
-    with gr.Row(elem_classes=["technical-details-section"]):
-        with gr.Column(elem_classes=["expertise-text-container"]):
-            gr.Markdown('<h2 class="expertise-title">How It Works</h2>')
-            gr.Markdown('<p class="expertise-subtitle">Our system employs a sophisticated blend of techniques to deliver accurate results by analyzing multiple data points.</p>')
-            with gr.Column(elem_classes=["feature-list"]):
-                with gr.Row(elem_classes=["feature-item"]):
-                    gr.Markdown("<h4>Video Analysis</h4>")
-                    gr.Markdown("<p>Utilizes advanced facial recognition and computer vision to analyze eye and mouth movements, along with subtle emotional cues.</p>")
-                with gr.Row(elem_classes=["feature-item"]):
-                    gr.Markdown("<h4>Audio Analysis</h4>")
-                    gr.Markdown("<p>Analyzes vocal tone, pitch, and sentiment to detect emotional cues and stress levels in your voice.</p>")
-                with gr.Row(elem_classes=["feature-item"]):
-                    gr.Markdown("<h4>Questionnaire</h4>")
-                    gr.Markdown("<p>A standardized self-assessment questionnaire provides crucial self-reported data to complement the sensor-based analysis.</p>")
-                gr.Button("Learn More", elem_classes="learn-more-btn")
-        with gr.Column(elem_classes=["expertise-image-container"]):
-            gr.Image("https://placehold.co/400x550/e5989b/fff?text=How+It+Works+Image", elem_classes="expertise-image")
-
-    # --- Event Handlers ---
 
     # Questionnaire submit → store answers + go to Face Analysis tab
     def questionnaire_to_face(*answers):
@@ -1103,19 +569,19 @@ with gr.Blocks(theme=burnout_theme, css=custom_css) as demo:
         outputs=[text_output, sentiment_output, pitch_output],
     )
 
-    # Proceed to Results
-    def proceed_to_results():
+    # Proceed to Suggestions tab
+    def proceed_to_suggestions():
         required_keys = ["questionnaire", "face", "emotion", "voice", "subtypes"]
         missing_keys = [key for key in required_keys if key not in stored_data]
 
         if missing_keys:
-            return {"Error": f"Missing data: {', '.join(missing_keys)}. Please complete all sections."}, "", gr.Tabs(selected=2)
+            return f"Error: Missing data: {', '.join(missing_keys)}. Please complete all sections.", gr.Tabs(selected=2)
 
         try:
-            # Defensive cleaning as you had
+            # Defensive cleaning
             subtype_counts = stored_data.get("subtypes", {})
             cleaned_subtypes = {str(emotion): {str(k): int(v) for k, v in subs.items()} 
-                                for emotion, subs in subtype_counts.items()}
+                                 for emotion, subs in subtype_counts.items()}
             
             results = aggregate_results(
                 stored_data["questionnaire"],
@@ -1124,24 +590,65 @@ with gr.Blocks(theme=burnout_theme, css=custom_css) as demo:
                 stored_data["voice"],
                 cleaned_subtypes,
             )
-            # Store results dict to later use for model prediction
-            stored_data["results"] = results
-
-            # Get burnout score from model prediction
-            burnout_score = predict_burnout(results)  # Your integration function
             
-            return results, f"{burnout_score:.2f}", gr.Tabs(selected=3)
-        except Exception as e:
-            return {"Error": f"Failed to generate results: {str(e)}"}, "", gr.Tabs(selected=2)
+            # Get burnout score from model prediction
+            burnout_score = predict_burnout(results)
 
+            if burnout_score==0.0:
+                suggestion_text = """
+                Your burnout score lies between 0 to 20.
+                You're feeling good.
+                You're active and enjoying your work. The goal is to build habits to maintain that feeling and prevent stress from building up.
+                Maintain healthy work-life habits. This includes taking proper lunch breaks and not checking work emails after hours.
+                Practice gratitude journaling. Write down three things you are grateful for daily to build resilience.
+                Promote regular physical activity. Even a 20-minute walk can help reduce stress and improve your mood.
+                """
+            elif burnout_score==1.0:
+                suggestion_text = """
+                Your burnout score lies between 20 to 40.
+                You're feeling a bit tired.
+                You're under a little stress, but not completely burned out. Now is the time to build in small, intentional breaks to prevent burnout.
+                Use the Pomodoro Technique: Work for 25 minutes, then take a 5-minute break. This prevents stress from building up.
+                Try Box Breathing: Inhale (4s), Hold (4s), Exhale (4s), Hold (4s). This calms your nervous system quickly.
+                Schedule "disconnect" periods. Set specific times to turn off work notifications.
+                """
+            elif burnout_score==2.0:
+                suggestion_text = """
+                Your burnout score lies between 40 to 60.
+                You're starting to burn out.
+                You're feeling physical and emotional exhaustion. This is a critical stage. Set firm boundaries and actively manage your stress.
+                Implement a Digital Detox. Designate tech-free hours in the evening to mentally separate work from personal life.
+                Prioritize Physical Activity: Aim for 20-30 minutes of aerobic exercise, 3 times a week, to reduce stress hormones.
+                Focus on Sleep Hygiene: Ensure you get 7-9 hours of quality sleep to improve your body's ability to cope with stress.
+                """
+            elif burnout_score==3.0:
+                suggestion_text = """
+                Your burnout score lies between 60 to 80.
+                Your burnout symptoms are persistent.
+                They won't go away, and you're thinking about work constantly. You need a more structured approach and should consider professional help.
+                Take Mandatory Time Off. Use your vacation days to fully disconnect and recharge.
+                Consider a Mindfulness-Based Stress Reduction (MBSR) course. This is a more intensive program that provides long-term stress management skills.
+                Seek Professional Help. Contact your company's Employee Assistance Program (EAP) or a therapist for confidential support.
+                """
+            else:
+                suggestion_text = """
+                Your burnout score lies between 80 to 100.
+                You feel completely burned out.
+                You feel like you can't go on. Your health and safety are the top priority. You need immediate professional help.
+                Access Crisis Resources: If you are having thoughts of self-harm, immediately call a crisis hotline like the National Suicide Prevention Lifeline at 988.
+                Consult a Doctor Immediately. Seek urgent help from a doctor, psychologist, or psychiatrist.
+                Prioritize Health Over Work. Your health and safety are the most important thing. Work can wait.
+                """
+            
+            return suggestion_text, gr.Tabs(selected=3)
+        except Exception as e:
+            return f"Error: Failed to generate results: {str(e)}", gr.Tabs(selected=2)
 
 
     proceed_to_results_btn.click(
-        fn=proceed_to_results,
-        outputs=[results_json,burnout_score_output, tabs],
+        fn=proceed_to_suggestions,
+        outputs=[suggestion_output, tabs],
     )
-
     
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 7860))
-    demo.launch(server_name="0.0.0.0", server_port=port, share=True)
+    demo.launch(share=True)
