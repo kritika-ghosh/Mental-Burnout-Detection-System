@@ -69,27 +69,18 @@ cd mental-burnout-detector
 # Install dependencies
 pip install -r requirements.txt
 python app.py
-## 5. Getting Started
+```
+### 5.Model Performance
 
-### Prerequisites
+* **CatBoost (Accuracy: 0.78):** This model emerged as the most accurate single model, outperforming all other classifiers due to its specialized approach to handling categorical features and unique training methods for preventing overfitting.
+* **CatBoost + SVM Stacking (Accuracy: 0.74):** This ensemble paired the two highest-performing individual models, resulting in the highest macro average F1-score and confirming that combining the strongest individual classifiers yields the most robust final model.
+* **Random Forest + CatBoost Stacking (Accuracy: 0.74):** This hybrid ensemble combined a bagging model with a boosting model, leveraging their different strengths to achieve a notable improvement.
+* **Support Vector Machine (SVM) (Accuracy: 0.72):** SVM excelled by using a non-linear kernel to find an optimal hyperplane in a high-dimensional space, validating the presence of complex, non-linear patterns in the data.
+* **Random Forest (Accuracy: 0.69):** This bagging-based ensemble model delivered solid performance, providing a significant accuracy boost over the baseline and proving its resistance to overfitting and ability to handle non-linear relationships.
+* **Logistic Regression (Accuracy: 0.54):** Serving as the baseline, this linear model's performance was limited by its inability to capture the complex, non-linear relationships in the data. Its modest accuracy indicated that a more sophisticated approach was necessary.
 
-* **Hardware:** Webcam & Microphone.
-
-* **Software:** Python 3.10,pip.
-## 5. Model Performance
-
-The following table summarizes the performance of the various models tested, with **CatBoost** emerging as the top-performing model with the highest accuracy.
-
-| Model | Accuracy | Description |
-| :--- | :--- | :--- |
-| **CatBoost** | **0.78** | Emerged as the most accurate single model, outperforming all other classifiers. |
-| CatBoost + SVM Stacking | 0.74 | An ensemble that paired the two highest-performing single models. |
-| Random Forest + CatBoost Stacking | 0.74 | A hybrid ensemble that combined a bagging model with a boosting model. |
-| Support Vector Machine (SVM) | 0.72 | Excelled by using a non-linear kernel to find an optimal hyperplane. |
-| Random Forest | 0.69 | A bagging-based ensemble model that provided a significant accuracy boost over the baseline. |
-| Logistic Regression | 0.54 | A linear model that served as the baseline. |
-### File Structure
-``bash
+### 6. File Structure
+```bash
 .
 ├── app.py                  # Main Flask/Streamlit application                
 ├── deepface.py             # Emotion detection module               
@@ -102,3 +93,4 @@ The following table summarizes the performance of the various models tested, wit
 ├── runtime.txt             # Python runtime specification
 ├── scaler.joblib           # StandardScaler object
 └── README.md               # Project Documentation
+```
