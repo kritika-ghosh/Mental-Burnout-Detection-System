@@ -14,6 +14,7 @@ Our project addresses this by creating a multi-modal burnout detection system th
 * **Facial Analysis** (eye and mouth fatigue indicators + emotion recognition).
 * **Voice Analysis** (sentiment, transcription).
 * **outcome**(it will also provide a personalized burnout score and coping suggestions based on the analysis.)
+
 This holistic approach enables more accurate, real-time detection of burnout signs compared to single-modality systems.
 
 ***
