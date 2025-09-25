@@ -23,9 +23,8 @@ This holistic approach enables more accurate, real-time detection of burnout sig
 
 * Interactive web-based questionnaire for self-assessment.
 * Real-time facial analysis using **EAR (Eye Aspect Ratio)**, **MAR (Mouth Aspect Ratio)**, and emotion detection.
-* Voice-based analysis for sentiment and pitch fluctuations.
+* Voice-based analysis for sentiment .
 * Speech-to-text transcription for further semantic understanding.
-* Data storage for further training and model improvement.
 *  Provides a personalized burnout score and coping suggestions based on the analysis.
 * **Live Demo:** [Check out the live demo on Hugging Face Spaces](https://huggingface.co/spaces/project-exhibition/Burnout-detection).
 
