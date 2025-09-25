@@ -1,114 +1,104 @@
 # Mental-Burnout-Detection-System
 
-**Tagline:**
-A multi-modal system using facial, vocal, and questionnaire-based analysis to detect early signs of mental burnout.
+**Tagline:** A multi-modal system using facial, vocal, and questionnaire-based analysis to detect early signs of mental burnout.
+
+***
 
 ## 1. Introduction
 
 Mental burnout is a growing concern among students, professionals, and healthcare workers. It leads to decreased productivity, poor mental health, and long-term health issues.
+
 Our project addresses this by creating a multi-modal burnout detection system that integrates:
 
-- **Questionnaires** for self-reported symptoms.
-
-- **Facial Analysis** (eye and mouth fatigue indicators + emotion recognition).
-
-- **Voice Analysis** (sentiment, transcription).
-
+* **Questionnaires** for self-reported symptoms.
+* **Facial Analysis** (eye and mouth fatigue indicators + emotion recognition).
+* **Voice Analysis** (sentiment, transcription).
 
 This holistic approach enables more accurate, real-time detection of burnout signs compared to single-modality systems.
 
+***
+
 ## 2. Features
 
-- Interactive web-based questionnaire for self-assessment.
+* Interactive web-based questionnaire for self-assessment.
+* Real-time facial analysis using **EAR (Eye Aspect Ratio)**, **MAR (Mouth Aspect Ratio)**, and emotion detection.
+* Voice-based analysis for sentiment and pitch fluctuations.
+* Speech-to-text transcription for further semantic understanding.
+* Data storage for further training and model improvement.
+* Modular design for easy scalability and future integration with healthcare platforms.
+* **Live Demo:** [Check out the live demo on Hugging Face Spaces](https://huggingface.co/spaces/project-exhibition/Burnout-detection).
 
-- Real-time facial analysis using EAR (Eye Aspect Ratio), MAR (Mouth Aspect Ratio), and emotion detection.
+***
 
-- Voice-based analysis for sentiment and pitch fluctuations.
+## 3. Technical Details and Methodology
 
-- Speech-to-text transcription for further semantic understanding.
+### Dataset: Description and Collection
 
-- Data storage for further training and model improvement.
+The dataset for this study was collected using a custom-built, multi-modal data acquisition tool designed to measure psychological burnout indicators. The tool combines self-reported survey data with physiological and emotional data captured through a webcam and microphone, with a total of **326 samples** collected.
 
-- Modular design for easy scalability and future integration with healthcare platforms.
+The data collection was a sequential, three-part process:
 
- ## 3. Technical Details and Methodology
+1.  **Self-Reported Burnout Questionnaire:** Participants first completed a six-question survey to assess various facets of academic and personal burnout using a Likert scale.
+2.  **Facial and Emotional Analysis:** Participants engaged in a 20-second facial analysis session using a webcam. The tool measured key facial indicators like **Eye Aspect Ratio (EAR)**, **Mouth Aspect Ratio (MAR)**, and classified emotions into positive, neutral, and negative categories.
+3.  **Voice and Sentiment Analysis:** Participants provided a 10-second voice sample, which was processed to extract features and perform sentiment analysis. The audio was converted into text using a speech recognition API, and **VADER Sentiment Scores** were generated.
 
-### Questionnaire
+### Data Preprocessing and Preparation
 
-- Collects user-reported stress and fatigue levels.
+The data preprocessing phase refined the raw dataset for machine learning by addressing quality issues, standardizing features, and mitigating class imbalance.
 
-- Based on validated clinical burnout scales ([Burnout scale](https://link.springer.com/article/10.1007/s11606-014-3112-6)).
+* **Data Cleaning and Encoding:** Qualitative data, such as burnout labels and frequency responses, were mapped to a numerical scale of 0-4. A specific subset of 20 data points was then removed, and any rows with missing values were dropped.
+* **Binning and Consistency Filtering:** The continuous `Sentiment_Comp` feature was partitioned using both equal-frequency (pd.qcut) and equal-width (pd.cut) methods. Only data points where both methods yielded the same bin label were kept to isolate the most reliable data.
+* **Final Model Preparation:** The dataset was split into an 80% training and 20% testing set using a **stratified split** to maintain class proportions. Numerical features were then **standardized** using a StandardScaler, and the **SMOTE** technique was applied to the training data to synthetically balance class distribution.
 
+***
 
-### Facial Analysis
+## 4. Getting Started
 
-- **EAR (Eye Aspect Ratio):** Detects eye closure, drowsiness, and fatigue .([source]( https://www.mdpi.com/1424-8220/24/17/5683)).
+### Prerequisites
 
-- **MAR (Mouth Aspect Ratio):** Captures yawning/fatigue signals.
+* **Hardware:** Webcam & Microphone.
+* **Software:** Python 3.10, pip.
 
-- **Emotion Detection:** Uses DeepFace for classifying facial emotions (happy, sad, stressed, angry, etc.) ([source]( https://arxiv.org/abs/2504.03010)).
+### Installation
 
+```bash
+# Clone repository
+git clone [https://github.com/your-username/mental-burnout-detector.git](https://github.com/your-username/mental-burnout-detector.git)
+cd mental-burnout-detector
 
- ### Voice Analysis
-
-- **Speech-to-Text:** Converts audio input into text for further sentiment analysis.
-
-- **Sentiment Analysis:** Implements VADER sentiment scoring on transcripts.
-
-
- ## 4. Research References
-
-1.**Burnout Questionnaire Scale:** [Spring - Internal Medicine Burnout study](https://link.springer.com/article/10.1007/s11606-014-3112-6)
-
-
-2. **EAR & MAR Metrics:**[MDPI- Eye/ Mouth Aspect Ratio in Fatigue Detection](https://www.mdpi.com/1424-8220/24/17/56830)
-
-
-3. **Emotion Detection & Intelligence:** [arXiv - Emotional Intelligence via Deep Learning](https://arxiv.org/abs/2504.03010)
-
-
-4. **Voice Stress & Sentiment:** [AJCST - Speech Processing for Stress Detection](https://www.ajcst.co/index.php/ajcst/article/view/2037/6786)
-
+# Install dependencies
+pip install -r requirements.txt
+python app.py
 ## 5. Getting Started
 
 ### Prerequisites
 
-Hardware: Webcam & Microphone.
+* **Hardware:** Webcam & Microphone.
 
-Software:Python 3.10 , pip
+* **Software:** Python 3.10,pip.
+## 5. Model Performance
 
- ### Installation
+The following table summarizes the performance of the various models tested, with **CatBoost** emerging as the top-performing model with the highest accuracy.
 
-# Clone repository
-git clone
-https://github.com/your-username/mental-burnout-detector.git
-cd mental-burnout-detector
-
-# Install dependencies
- ```bash
-pip install -r requirements.txt
-```
-# Run the application
-
-python app.py
-
-## File Structure
-```bash
+| Model | Accuracy | Description |
+| :--- | :--- | :--- |
+| **CatBoost** | **0.78** | Emerged as the most accurate single model, outperforming all other classifiers. |
+| CatBoost + SVM Stacking | 0.74 | An ensemble that paired the two highest-performing single models. |
+| Random Forest + CatBoost Stacking | 0.74 | A hybrid ensemble that combined a bagging model with a boosting model. |
+| Support Vector Machine (SVM) | 0.72 | Excelled by using a non-linear kernel to find an optimal hyperplane. |
+| Random Forest | 0.69 | A bagging-based ensemble model that provided a significant accuracy boost over the baseline. |
+| Logistic Regression | 0.54 | A linear model that served as the baseline. |
+### File Structure
+``bash
 .
 ├── app.py                  # Main Flask/Streamlit application                
 ├── deepface.py             # Emotion detection module               
 ├── ear_mar_calculation.py  # EAR & MAR Fatigue detection   
 ├── voice.py                # Voice analysis   
 ├── requirements.txt        # Dependencies   
-└── README.md               # Project Documentation   
-```
-## Contributions
-
-- Muskan and Mineesha (voice sentimental analysis ,burnout scale,input capture using WebRTC API, Enabling video/audio processing for interactive features)
-
-- Rajat and Manan (Emotion Detection)
-
-- Kritika and Prabhav( EAR and MAR logic and calculation , Data pre - processing and model training )
-
-
-
+├── literature.pdf          # Research references
+├── data - data (6).csv     # Raw dataset
+├── model.joblib            # Trained CatBoost model
+├── runtime.txt             # Python runtime specification
+├── scaler.joblib           # StandardScaler object
+└── README.md               # Project Documentation
