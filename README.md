@@ -13,7 +13,7 @@ Our project addresses this by creating a multi-modal burnout detection system th
 * **Questionnaires** for self-reported symptoms.
 * **Facial Analysis** (eye and mouth fatigue indicators + emotion recognition).
 * **Voice Analysis** (sentiment, transcription).
-
+* **outcome**(it will also provide a personalized burnout score and coping suggestions based on the analysis.)
 This holistic approach enables more accurate, real-time detection of burnout signs compared to single-modality systems.
 
 ***
@@ -25,7 +25,7 @@ This holistic approach enables more accurate, real-time detection of burnout sig
 * Voice-based analysis for sentiment and pitch fluctuations.
 * Speech-to-text transcription for further semantic understanding.
 * Data storage for further training and model improvement.
-* Modular design for easy scalability and future integration with healthcare platforms.
+*  Provides a personalized burnout score and coping suggestions based on the analysis.
 * **Live Demo:** [Check out the live demo on Hugging Face Spaces](https://huggingface.co/spaces/project-exhibition/Burnout-detection).
 
 ***
@@ -40,7 +40,7 @@ The data collection was a sequential, three-part process:
 
 1.  **Self-Reported Burnout Questionnaire:** Participants first completed a six-question survey to assess various facets of academic and personal burnout using a Likert scale.
 2.  **Facial and Emotional Analysis:** Participants engaged in a 20-second facial analysis session using a webcam. The tool measured key facial indicators like **Eye Aspect Ratio (EAR)**, **Mouth Aspect Ratio (MAR)**, and classified emotions into positive, neutral, and negative categories.
-3.  **Voice and Sentiment Analysis:** Participants provided a 10-second voice sample, which was processed to extract features and perform sentiment analysis. The audio was converted into text using a speech recognition API, and **VADER Sentiment Scores** were generated.
+3.  **Voice and Sentiment Analysis:** Participants provided a  voice sample, which was processed to extract features and perform sentiment analysis. The audio was converted into text using a speech recognition API, and **VADER Sentiment Scores** were generated.
 
 ### Data Preprocessing and Preparation
 
