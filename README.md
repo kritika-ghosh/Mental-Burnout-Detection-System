@@ -31,7 +31,27 @@ This holistic approach enables more accurate, real-time detection of burnout sig
 ***
 
 ## 3. Technical Details and Methodology
+### Questionnaire
 
+- Collects user-reported stress and fatigue levels.
+
+- Based on validated clinical burnout scales ([Burnout scale](https://link.springer.com/article/10.1007/s11606-014-3112-6)).
+
+
+### Facial Analysis
+
+- **EAR (Eye Aspect Ratio):** Detects eye closure, drowsiness, and fatigue .([source]( https://www.mdpi.com/1424-8220/24/17/5683)).
+
+- **MAR (Mouth Aspect Ratio):** Captures yawning/fatigue signals.
+
+- **Emotion Detection:** Uses DeepFace for classifying facial emotions (happy, sad, stressed, angry, etc.) ([source]( https://arxiv.org/abs/2504.03010)).
+
+
+ ### Voice Analysis
+
+- **Speech-to-Text:** Converts audio input into text for further sentiment analysis.
+
+- **Sentiment Analysis:** Implements VADER sentiment scoring on transcripts.
 ### Dataset: Description and Collection
 
 The dataset for this study was collected using a custom-built, multi-modal data acquisition tool designed to measure psychological burnout indicators. The tool combines self-reported survey data with physiological and emotional data captured through a webcam and microphone, with a total of **326 samples** collected.
