@@ -72,7 +72,16 @@ The data preprocessing phase refined the raw dataset for machine learning by add
 
 ***
 
-## 4. Getting Started
+## 4. Model Performance
+
+* **CatBoost (Accuracy: 0.78):** This model emerged as the most accurate single model, outperforming all other classifiers due to its specialized approach to handling categorical features and unique training methods for preventing overfitting.
+* **CatBoost + SVM Stacking (Accuracy: 0.74):** This ensemble paired the two highest-performing individual models, resulting in the highest macro average F1-score and confirming that combining the strongest individual classifiers yields the most robust final model.
+* **Random Forest + CatBoost Stacking (Accuracy: 0.74):** This hybrid ensemble combined a bagging model with a boosting model, leveraging their different strengths to achieve a notable improvement.
+* **Support Vector Machine (SVM) (Accuracy: 0.72):** SVM excelled by using a non-linear kernel to find an optimal hyperplane in a high-dimensional space, validating the presence of complex, non-linear patterns in the data.
+* **Random Forest (Accuracy: 0.69):** This bagging-based ensemble model delivered solid performance, providing a significant accuracy boost over the baseline and proving its resistance to overfitting and ability to handle non-linear relationships.
+* **Logistic Regression (Accuracy: 0.54):** Serving as the baseline, this linear model's performance was limited by its inability to capture the complex, non-linear relationships in the data. Its modest accuracy indicated that a more sophisticated approach was necessary.
+
+## 5. Getting Started
 
 ### Prerequisites
 
@@ -90,14 +99,6 @@ cd mental-burnout-detector
 pip install -r requirements.txt
 python app.py
 ```
-### 5.Model Performance
-
-* **CatBoost (Accuracy: 0.78):** This model emerged as the most accurate single model, outperforming all other classifiers due to its specialized approach to handling categorical features and unique training methods for preventing overfitting.
-* **CatBoost + SVM Stacking (Accuracy: 0.74):** This ensemble paired the two highest-performing individual models, resulting in the highest macro average F1-score and confirming that combining the strongest individual classifiers yields the most robust final model.
-* **Random Forest + CatBoost Stacking (Accuracy: 0.74):** This hybrid ensemble combined a bagging model with a boosting model, leveraging their different strengths to achieve a notable improvement.
-* **Support Vector Machine (SVM) (Accuracy: 0.72):** SVM excelled by using a non-linear kernel to find an optimal hyperplane in a high-dimensional space, validating the presence of complex, non-linear patterns in the data.
-* **Random Forest (Accuracy: 0.69):** This bagging-based ensemble model delivered solid performance, providing a significant accuracy boost over the baseline and proving its resistance to overfitting and ability to handle non-linear relationships.
-* **Logistic Regression (Accuracy: 0.54):** Serving as the baseline, this linear model's performance was limited by its inability to capture the complex, non-linear relationships in the data. Its modest accuracy indicated that a more sophisticated approach was necessary.
 
 ### 6. File Structure
 ```bash
@@ -111,6 +112,10 @@ python app.py
 ├── data - data (6).csv     # Raw dataset
 ├── model.joblib            # Trained CatBoost model
 ├── runtime.txt             # Python runtime specification
+├── index.html              # Website frontpage
+├── next.html               # Website second page
+├── style.css               # Website frontpage styling
+├── style2.css              # Website second page styling
 ├── scaler.joblib           # StandardScaler object
 └── README.md               # Project Documentation
 ```
