@@ -81,6 +81,8 @@ The data preprocessing phase refined the raw dataset for machine learning by add
 * **Random Forest (Accuracy: 0.69):** This bagging-based ensemble model delivered solid performance, providing a significant accuracy boost over the baseline and proving its resistance to overfitting and ability to handle non-linear relationships.
 * **Logistic Regression (Accuracy: 0.54):** Serving as the baseline, this linear model's performance was limited by its inability to capture the complex, non-linear relationships in the data. Its modest accuracy indicated that a more sophisticated approach was necessary.
 
+***
+
 ## 5. Getting Started
 
 ### Prerequisites
